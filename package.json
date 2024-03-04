@@ -16,6 +16,8 @@
     "express-fileupload": "^1.4.0",
     "express-validator": "^7.0.1",
     "moment": "^2.29.4",
+    "mongodb": "^6.4.0",
+    "mongoose": "^8.2.0",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.22",
     "prop-types": "^15.8.1",

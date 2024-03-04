@@ -5,15 +5,19 @@ import fileUpload from 'express-fileupload';
 import { createRequire } from "module";
 import {resolve, dirname} from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fs = require('fs');
+import { dataCollection } from './schemes.js';
 
+	
+const db_url = "mongodb+srv://alimbo333:al886612345@cluster0.qakuqr0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
-const groups = require("./data/groups.json");
-const attendance = require("./data/attendance.json");
-const persons = require("./data/persons.json");
-const data = { attendance, groups, persons };
+const db = mongoose.connect(db_url);
+db.then(res => console.log("db connected"))
+	.catch(err => console.log(err))
+
 
 // vars
 const app = express();
@@ -27,11 +31,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan(':method :url :status :res[content-length] :response-time ms')); // выведение в консоль всех запросов
 
 
-app.get('/getData', (req, res) => {
+
+app.get('/getData', async (req, res) => {
 	try {
 		let {type} = req.query;
-		if(!data[type]) return res.status(400).message('нет такого ключа')
-		return res.status(200).json(data[type]);
+		let {data} = await dataCollection.findOne({name: type})
+		if(!data) return res.status(400).message('нет такого ключа');
+		return res.status(200).json(JSON.parse(data));
 	} catch (error) {
 		return res.status(404).json({ message: 'error' })
 	}
@@ -40,11 +46,11 @@ app.get('/getData', (req, res) => {
 app.post('/setData', async (req, res) => {
 	try {
 		let {type, value} = req.body;
-		if(!data[type]) return res.status(400).message('нет такого ключа');
-		console.log(type, value)
-		await fs.writeFile(resolve(__dirname, `./data/${type}.json`), JSON.stringify(value), (err) => console.log(err) );		
-		return res.status(200).json({message: 'Успешно'});
+		let findItem = await dataCollection.updateOne({name: type}, {data: JSON.stringify(value)})
+		if(!findItem) return res.status(400).message('нет такого ключа');
+		return res.status(200).json({message: "успешно"});
 	} catch (error) {
+		console.log(error)
 		return res.status(404).json({ message: 'error' })
 	}
 })
